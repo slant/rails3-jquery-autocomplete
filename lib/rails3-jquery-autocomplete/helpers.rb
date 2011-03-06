@@ -100,10 +100,10 @@ module Rails3JQueryAutocomplete
       case implementation
         when :mongoid
           search = (is_full_search ? '.*' : '^') + term + '.*'
-          items = model.where(method.to_sym => /#{search}/i).limit(limit).order_by(order).uniq
+          items = model.where(method.to_sym => /#{search}/i).limit(limit).order_by(order)
         when :activerecord
-          items = model.where(["LOWER(#{method}) LIKE ?", "#{(is_full_search ? '%' : '')}#{term.downcase}%"]) \
-            .limit(limit).order(order).uniq
+          items = model.select("DISTINCT #{method}").where(["LOWER(#{method}) LIKE ?", "#{(is_full_search ? '%' : '')}#{term.downcase}%"]) \
+            .limit(limit).order(order)
       end
     end
 
