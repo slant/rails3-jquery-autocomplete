@@ -7,8 +7,12 @@ module Rails3JQueryAutocomplete
     # Returns a three keys hash actually used by the Autocomplete jQuery-ui
     # Can be overriden to show whatever you like
     #
-    def json_for_autocomplete(items, method)
-      items.collect {|item| {"id" => item.id, "label" => item.send(method), "value" => item.send(method)}}
+    def json_for_autocomplete(items, method, unique)
+      if unique
+        items.collect {|item| {"label" => item.send(method), "value" => item.send(method)}}
+      else
+        items.collect {|item| {"id" => item.id, "label" => item.send(method), "value" => item.send(method)}}
+      end
     end
 
     # Returns parameter model_sym as a constant
@@ -87,6 +91,7 @@ module Rails3JQueryAutocomplete
       options = parameters[:options]
       term = parameters[:term]
       is_full_search = options[:full]
+      is_unique = options[:unique]
 
       limit = get_autocomplete_limit(options)
       implementation = get_implementation(model)
@@ -95,10 +100,10 @@ module Rails3JQueryAutocomplete
       case implementation
         when :mongoid
           search = (is_full_search ? '.*' : '^') + term + '.*'
-          items = model.where(method.to_sym => /#{search}/i).limit(limit).order_by(order)
+          items = model.where(method.to_sym => /#{search}/i).limit(limit).order_by(order).uniq
         when :activerecord
           items = model.where(["LOWER(#{method}) LIKE ?", "#{(is_full_search ? '%' : '')}#{term.downcase}%"]) \
-            .limit(limit).order(order)
+            .limit(limit).order(order).uniq
       end
     end
 
